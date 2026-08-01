@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Un rincón de paz para ti</title>
+  
+  <!-- Carga de tipografías elegantes de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-cream: #fbf7f0;
+      --bg-sunset-start: #fdf5ea;
+      --bg-sunset-mid: #f9ece5;
+      --bg-sunset-end: #f4ded3;
+      --text-main: #4a3e3d;
+      --text-muted: #7d6b69;
+      --accent-gold: #d4af37;
+      --accent-warm: #e8a598;
+      --card-bg: rgba(255, 253, 250, 0.92);
+      --card-shadow: 0 20px 40px rgba(118, 88, 81, 0.08), 0 6px 15px rgba(0, 0, 0, 0.03);
+      --border-soft: rgba(220, 195, 180, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-main);
+      background: linear-gradient(160deg, var(--bg-sunset-start) 0%, var(--bg-sunset-mid) 50%, var(--bg-sunset-end) 100%);
+      overflow-x: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    /* Canvas para animación de luces y partículas de polvo dorado */
+    #particles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Decoraciones florales en las esquinas */
+    .flower-corner {
+      position: fixed;
+      width: clamp(140px, 22vw, 260px);
+      height: auto;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.85;
+      filter: drop-shadow(0 4px 10px rgba(212, 175, 55, 0.12));
+      transition: transform 0.8s ease-out;
+    }
+
+    .flower-top-left { top: -10px; left: -10px; transform: rotate(0deg); }
+    .flower-top-right { top: -10px; right: -10px; transform: scaleX(-1); }
+    .flower-bottom-left { bottom: -10px; left: -10px; transform: scaleY(-1); }
+    .flower-bottom-right { bottom: -10px; right: -10px; transform: scale(-1); }
+
+    /* Reproductor de música sutil */
+    .audio-control {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-soft);
+      padding: 10px 16px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .audio-control:hover {
+      background: rgba(255, 255, 255, 0.98);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(180, 140, 130, 0.15);
+    }
+
+    .audio-icon {
+      width: 18px;
+      height: 18px;
+      fill: var(--text-muted);
+      transition: fill 0.3s ease;
+    }
+
+    .audio-control.playing .audio-icon { fill: #b37d74; }
+
+    .audio-text {
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .main-container {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      max-width: 760px;
+      padding: 40px 20px 80px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* Vista inicial con vela y botón */
+    .intro-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: opacity 1.2s ease, transform 1.2s ease;
+      width: 100%;
+      margin: auto 0;
+    }
+
+    .intro-section.hidden {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+      display: none;
+    }
+
+    /* Animación de la vela */
+    .candle-container {
+      position: relative;
+      width: 80px;
+      height: 120px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .candle-body {
+      width: 32px;
+      height: 60px;
+      background: linear-gradient(to right, #f7f3ec, #ede4d8);
+      border-radius: 4px 4px 2px 2px;
+      box-shadow: inset -3px 0 6px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .candle-wick {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 10px;
+      background-color: #555;
+    }
+
+    .candle-flame {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 24px;
+      background: radial-gradient(ellipse at bottom, #ffed85 0%, #ff9e3b 50%, rgba(255,100,0,0) 100%);
+      border-radius: 50% 50% 35% 35%;
+      animation: flicker 2.5s infinite alternate ease-in-out;
+      filter: drop-shadow(0 0 12px rgba(255, 170, 70, 0.7));
+    }
+
+    .candle-glow {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(255, 215, 150, 0.35) 0%, rgba(255, 215, 150, 0) 70%);
+      border-radius: 50%;
+      animation: pulseGlow 3s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+
+    @keyframes flicker {
+      0% { transform: translateX(-50%) scale(1) rotate(-1deg); opacity: 0.95; }
+      20% { transform: translateX(-49%) scale(1.05) rotate(1deg); opacity: 1; }
+      40% { transform: translateX(-51%) scale(0.95) rotate(-2deg); opacity: 0.9; }
+      60% { transform: translateX(-50%) scale(1.02) rotate(1deg); opacity: 0.98; }
+      80% { transform: translateX(-49%) scale(0.98) rotate(-1deg); opacity: 0.93; }
+      100% { transform: translateX(-50%) scale(1.03) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: translateX(-50%) scale(0.92); opacity: 0.6; }
+      100% { transform: translateX(-50%) scale(1.1); opacity: 0.9; }
+    }
+
+    .intro-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .intro-subtitle {
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      color: var(--text-muted);
+      margin-bottom: 35px;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .open-btn {
+      background: linear-gradient(135deg, #ffffff 0%, #f7ebe6 100%);
+      color: #614845;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      padding: 16px 36px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      letter-spacing: 1.5px;
+      border-radius: 40px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(180, 140, 130, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .open-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 15px 30px rgba(180, 140, 130, 0.22), 0 0 15px rgba(212, 175, 55, 0.2);
+      border-color: rgba(212, 175, 55, 0.7);
+      color: #4a3330;
+    }
+
+    .open-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #b37d74;
+      transition: transform 0.3s ease;
+    }
+
+    .open-btn:hover svg { transform: scale(1.15); }
+
+    .letter-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: clamp(30px, 6vw, 55px);
+      box-shadow: var(--card-shadow);
+      width: 100%;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1.5s cubic-bezier(0.19, 1, 0.22, 1), transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+      display: none;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .letter-card.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .letter-header-decor {
+      text-align: center;
+      margin-bottom: 25px;
+      opacity: 0.7;
+    }
+
+    .letter-header-decor svg {
+      width: 32px;
+      height: 32px;
+      fill: #c09088;
+    }
+
+    .letter-content {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.15rem, 2.5vw, 1.38rem);
+      line-height: 1.85;
+      color: #3d3231;
+      font-weight: 400;
+      text-align: left;
+    }
+
+    .letter-paragraph {
+      margin-bottom: 22px;
+      text-indent: 12px;
+    }
+
+    .letter-paragraph:first-of-type {
+      text-indent: 0;
+      font-size: clamp(1.3rem, 3vw, 1.55rem);
+      font-weight: 600;
+      color: #6b433d;
+      margin-bottom: 25px;
+    }
+
+    .letter-signature {
+      margin-top: 35px;
+      text-align: right;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1.2rem, 2.8vw, 1.45rem);
+      color: #6b433d;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* Botón de Narración con Voz */
+    .narration-bar {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px dashed rgba(180, 140, 130, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-btn-soft {
+      background: rgba(255, 245, 240, 0.8);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #6b433d;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 0.82rem;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .action-btn-soft:hover {
+      background: #ffffff;
+      transform: translateY(-2px);
+      border-color: rgba(212, 175, 55, 0.7);
+      box-shadow: 0 4px 12px rgba(180, 140, 130, 0.15);
+    }
+
+    .gemini-section {
+      margin-top: 35px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(220, 195, 180, 0.35);
+    }
+
+    .section-title-sm {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      color: #6b433d;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .section-desc-sm {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    /* Botones de Emoción */
+    .emotion-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(200, 170, 160, 0.35);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .pill-btn:hover, .pill-btn.active {
+      background: #fbf0ea;
+      border-color: var(--accent-gold);
+      color: #6b433d;
+      transform: translateY(-1px);
+    }
+
+    /* Dynamic Output Box */
+    .gemini-output-box {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(220, 195, 180, 0.4);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 15px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      line-height: 1.7;
+      color: #3d3231;
+      min-height: 60px;
+      display: none;
+      position: relative;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    .gemini-output-box.active {
+      display: block;
+    }
+
+    /* Rincón de Desahogo Chat */
+    .chat-input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 12px 18px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent-gold);
+      background: #ffffff;
+    }
+
+    /* Modal / Canvas de Imagen de Paz */
+    .generated-img-container {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .generated-img-container.active {
+      display: block;
+    }
+
+    .generated-img-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Spinner / Loading indicator */
+    .loader-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(180, 140, 130, 0.3);
+      border-radius: 50%;
+      border-top-color: #6b433d;
+      animation: spin 0.8s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .letter-footer {
+      margin-top: 45px;
+      padding-top: 20px;
+      border-top: 1px dashed rgba(180, 140, 130, 0.25);
+      text-align: center;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 300;
+    }
+
+    @media (max-width: 480px) {
+      .main-container { padding: 20px 15px 60px 15px; }
+      .letter-card { padding: 25px 18px; border-radius: 16px; }
+      .chat-input-wrapper { flex-direction: column; }
+      .audio-control { top: 16px; right: 16px; padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas para destellos y luz flotante -->
+  <canvas id="particles-canvas"></canvas>
+
+  <svg class="flower-corner flower-top-left" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 10C60 40 100 20 140 50C160 65 170 90 180 120" stroke="#a3b899" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <path d="M10 30C40 70 80 80 110 130" stroke="#b0c4a5" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M70 35C85 25 105 30 110 45C95 55 75 50 70 35Z" fill="#a8bc9f" opacity="0.7"/>
+    <path d="M110 70C125 60 145 65 150 80C135 90 115 85 110 70Z" fill="#98ac8f" opacity="0.6"/>
+    <g transform="translate(50, 40)">
+      <circle cx="0" cy="0" r="5" fill="#f4d068"/>
+      <ellipse cx="0" cy="-14" rx="5" ry="10" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="0" cy="14" rx="5" ry="10" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="-14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="-10" cy="-10" rx="5" ry="9" transform="rotate(45 -10 -10)" fill="#faf6ee" opacity="0.9"/>
+      <ellipse cx="10" cy="10" rx="5" ry="9" transform="rotate(45 10 10)" fill="#faf6ee" opacity="0.9"/>
+      <ellipse cx="-10" cy="10" rx="5" ry="9" transform="rotate(-45 -10 10)" fill="#faf6ee" opacity="0.9"/>
+      <ellipse cx="10" cy="-10" rx="5" ry="9" transform="rotate(-45 10 -10)" fill="#faf6ee" opacity="0.9"/>
+    </g>
+  </svg>
+
+  <svg class="flower-corner flower-top-right" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 10C60 40 100 20 140 50C160 65 170 90 180 120" stroke="#a3b899" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <path d="M70 35C85 25 105 30 110 45C95 55 75 50 70 35Z" fill="#a8bc9f" opacity="0.7"/>
+    <g transform="translate(50, 40)">
+      <circle cx="0" cy="0" r="5" fill="#f4d068"/>
+      <ellipse cx="0" cy="-14" rx="5" ry="10" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="0" cy="14" rx="5" ry="10" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="-14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.95"/>
+    </g>
+  </svg>
+
+  <svg class="flower-corner flower-bottom-left" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 10C60 40 100 20 140 50" stroke="#a3b899" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <g transform="translate(60, 45) scale(0.85)">
+      <circle cx="0" cy="0" r="5" fill="#f4d068"/>
+      <ellipse cx="0" cy="-14" rx="5" ry="10" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="0" cy="14" rx="5" ry="10" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="-14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.9"/>
+    </g>
+  </svg>
+
+  <svg class="flower-corner flower-bottom-right" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 10C60 40 100 20 140 50" stroke="#a3b899" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <g transform="translate(60, 45) scale(0.85)">
+      <circle cx="0" cy="0" r="5" fill="#f4d068"/>
+      <ellipse cx="0" cy="-14" rx="5" ry="10" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="0" cy="14" rx="5" ry="10" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="-14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.9"/>
+      <ellipse cx="14" cy="0" rx="10" ry="5" fill="#ffffff" opacity="0.9"/>
+    </g>
+  </svg>
+
+  <!-- Botón flotante para música opcional -->
+  <div class="audio-control" id="audio-btn" title="Activar/Desactivar música de piano">
+    <svg class="audio-icon" id="audio-icon" viewBox="0 0 24 24">
+      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+    </svg>
+    <span class="audio-text" id="audio-label">Música</span>
+  </div>
+
+  <main class="main-container">
+    
+    <!-- Vista Inicial: Vela e invitación -->
+    <section class="intro-section" id="intro-section">
+      <div class="candle-container">
+        <div class="candle-glow"></div>
+        <div class="candle-body">
+          <div class="candle-wick"></div>
+          <div class="candle-flame"></div>
+        </div>
+      </div>
+
+      <h1 class="intro-title">Un pequeño refugio de luz</h1>
+      <p class="intro-subtitle">Para cuando necesites recordar que estoy aquí...</p>
+
+      <button class="open-btn" id="open-letter-btn">
+        <span>Léelo cuando sientas que todo pesa</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </button>
+    </section>
+
+    <!-- Carta interactiva -->
+    <article class="letter-card" id="letter-card">
+      <div class="letter-header-decor">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+
+      <div class="letter-content" id="letter-text-body">
+        <p class="letter-paragraph">Para ti, mi amor.</p>
+        
+        <p class="letter-paragraph">Sé que estos días han sido más pesados de lo normal. Sé que has sentido que muchas cosas se han juntado al mismo tiempo y que, a veces, pareciera que la vida insiste en poner pruebas cuando uno ya está cansado.</p>
+        
+        <p class="letter-paragraph">No puedo prometerte que todo se resolverá mañana, ni que desaparecerán las preocupaciones. Pero sí puedo prometerte algo que para mí es muy importante: no estás solo.</p>
+        
+        <p class="letter-paragraph">Cuando sientas que el mundo pesa demasiado, quiero que recuerdes que tienes un lugar donde puedes descansar un poco. Si necesitas silencio, lo respeto. Si necesitas espacio, lo entiendo. Si necesitas hablar, te escucho. Y si un día solo puedes respirar y seguir un paso más, caminaré a tu lado ese paso.</p>
+        
+        <p class="letter-paragraph">No creo que seas una persona ‘salada’. Creo que eres una persona que está haciendo lo mejor que puede mientras carga preocupaciones que a veces no dice en voz alta.</p>
+        
+        <p class="letter-paragraph">Quiero que nunca olvides esto: yo no estoy contigo solo para los días fáciles. Estoy contigo también para los días grises, para los días de incertidumbre, para los días en que tú mismo dudas de tus fuerzas.</p>
+        
+        <p class="letter-paragraph">Y aunque haya momentos en los que no sepa cómo ayudarte, mi amor por ti también sabe quedarse, esperar y sostener.</p>
+        
+        <p class="letter-paragraph">Te quiero profundamente, y aquí estoy… hoy, mañana y cada vez que necesites recordar que alguien cree en ti incluso cuando tú estés cansado de creer.</p>
+        
+        <div class="letter-signature">
+          Con amor,<br>
+          Erika.
+        </div>
+      </div>
+
+      <!-- Barra de Narración por Voz (Gemini TTS) -->
+      <div class="narration-bar">
+        <button class="action-btn-soft" id="btn-read-tts">
+          <span id="tts-icon">🎙️</span>
+          <span id="tts-label">Escuchar esta carta con voz cálida</span>
+        </button>
+      </div>
+
+      <!-- MÓDULO 1: Generador de Pensamientos Reconfortantes en Tiempo Real -->
+      <div class="gemini-section">
+        <h3 class="section-title-sm">✨ Un pensamiento de amor para este instante</h3>
+        <p class="section-desc-sm">¿Cómo te sientes en este preciso momento? Toca una opción para que te dedique unas palabras especiales:</p>
+        
+        <div class="emotion-pills">
+          <button class="pill-btn" onclick="generateComfortThought('Sobrecarga y mucho cansancio')">☁️ Sobrecarga o cansancio</button>
+          <button class="pill-btn" onclick="generateComfortThought('Dudas de mí mismo o del futuro')">🌱 Dudando de mí</button>
+          <button class="pill-btn" onclick="generateComfortThought('Ansiedad o mente saturada')">🍃 Mente agitada</button>
+          <button class="pill-btn" onclick="generateComfortThought('Solo necesito sentirme querido y abrazado')">🤍 Necesito un abrazo</button>
+        </div>
+
+        <div class="gemini-output-box" id="comfort-output"></div>
+      </div>
+
+      <!-- MÓDULO 2: Rincón de Desahogo Tranquilo -->
+      <div class="gemini-section">
+        <h3 class="section-title-sm">💬 Tu rincón de desahogo</h3>
+        <p class="section-desc-sm">Si tienes algo en la cabeza que te pese, escríbelo aquí. Este espacio te responderá siempre con comprensión y ternura:</p>
+        
+        <div class="chat-input-wrapper">
+          <input type="text" class="chat-input" id="vent-input" placeholder="Escribe lo que sientes o lo que te preocupa hoy..." onkeydown="if(event.key==='Enter') sendVentMessage()">
+          <button class="action-btn-soft" id="btn-send-vent" onclick="sendVentMessage()">Compartir</button>
+        </div>
+
+        <div class="gemini-output-box" id="vent-output"></div>
+      </div>
+
+      <!-- MÓDULO 3: Postales de Paz Ilustradas -->
+      <div class="gemini-section">
+        <h3 class="section-title-sm">🎨 Una postal de paz para tus ojos</h3>
+        <p class="section-desc-sm">Crea una ilustración suave y serena pensada para calmar tu mirada:</p>
+        
+        <div style="text-align: center;">
+          <button class="action-btn-soft" id="btn-gen-art" onclick="generatePeacefulArt()">
+            <span>✨ Generar imagen de tranquilidad</span>
+          </button>
+        </div>
+
+        <div class="generated-img-container" id="art-output-container">
+          <img id="art-output-img" src="" alt="Ilustración de paz">
+        </div>
+      </div>
+
+      <footer class="letter-footer">
+        Cali, agosto de 2026
+      </footer>
+    </article>
+
+  </main>
+
+  <script>
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const particleCount = 45;
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 2.5 + 0.8;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3 - 0.15;
+        this.opacity = Math.random() * 0.6 + 0.2;
+        this.fadeSpeed = Math.random() * 0.005 + 0.002;
+        this.fadingIn = Math.random() > 0.5;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.fadingIn) {
+          this.opacity += this.fadeSpeed;
+          if (this.opacity >= 0.8) this.fadingIn = false;
+        } else {
+          this.opacity -= this.fadeSpeed;
+          if (this.opacity <= 0.1) this.fadingIn = true;
+        }
+
+        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 235, 205, ${this.opacity})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(255, 215, 150, 0.8)';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+
+    // Abrir carta
+    const openBtn = document.getElementById('open-letter-btn');
+    const introSection = document.getElementById('intro-section');
+    const letterCard = document.getElementById('letter-card');
+
+    openBtn.addEventListener('click', () => {
+      introSection.classList.add('hidden');
+      setTimeout(() => {
+        letterCard.classList.add('visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 600);
+    });
+
+    let audioCtx = null;
+    let isPlaying = false;
+    let timerId = null;
+
+    const audioBtn = document.getElementById('audio-btn');
+    const audioLabel = document.getElementById('audio-label');
+
+    const chords = [
+      [261.63, 329.63, 392.00, 523.25], // C Major
+      [220.00, 261.63, 329.63, 440.00], // A Minor
+      [174.61, 220.00, 261.63, 349.23], // F Major
+      [196.00, 246.94, 293.66, 392.00]  // G Major
+    ];
+
+    function createSoftPianoNote(freq, duration = 3.5, delay = 0) {
+      if (!audioCtx) return;
+
+      setTimeout(() => {
+        if (!isPlaying) return;
+
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+          console.log("Audio playback error", e);
+        }
+      }, delay * 1000);
+    }
+
+    function playPianoSequence() {
+      if (!isPlaying) return;
+      let chordIndex = 0;
+
+      function playNextChord() {
+        if (!isPlaying) return;
+        const currentChord = chords[chordIndex];
+        currentChord.forEach((note, idx) => {
+          createSoftPianoNote(note, 4.0, idx * 0.4);
+        });
+        chordIndex = (chordIndex + 1) % chords.length;
+        timerId = setTimeout(playNextChord, 4500);
+      }
+      playNextChord();
+    }
+
+    function toggleAudio() {
+      if (!isPlaying) {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        isPlaying = true;
+        audioBtn.classList.add('playing');
+        audioLabel.textContent = 'Sonando';
+        playPianoSequence();
+      } else {
+        isPlaying = false;
+        if (timerId) clearTimeout(timerId);
+        audioBtn.classList.remove('playing');
+        audioLabel.textContent = 'Música';
+      }
+    }
+
+    audioBtn.addEventListener('click', toggleAudio);
+
+    const apiKey = ""; // Leave blank for Canvas environment insertion
+
+    // Exponential Backoff Fetch Helper
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+      let delay = 1000;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (response.ok) return response;
+          if (response.status === 429) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2;
+            continue;
+          }
+          throw new Error(`HTTP Error ${response.status}`);
+        } catch (err) {
+          if (i === maxRetries - 1) throw err;
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    // 1. Text-To-Speech (Gemini 2.5 Flash TTS)
+    let ttsAudioElement = null;
+
+    document.getElementById('btn-read-tts').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-read-tts');
+      const label = document.getElementById('tts-label');
+      
+      if (ttsAudioElement && !ttsAudioElement.paused) {
+        ttsAudioElement.pause();
+        label.textContent = "Escuchar esta carta con voz cálida";
+        return;
+      }
+
+      label.innerHTML = `<span class="loader-spinner"></span> Creando voz cálida...`;
+
+      const promptText = "Di con voz muy suave, pausada, extremadamente afectuosa y calmada el siguiente texto: " + 
+        "Para ti, mi amor. Sé que estos días han sido más pesados de lo normal. No estás solo. Si necesitas respirar y seguir un paso más, caminaré a tu lado ese paso. Te quiero profundamente, Erika.";
+
+      const payload = {
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Vindemiatrix" } }
+          }
+        },
+        model: "gemini-2.5-flash-preview-tts"
+      };
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        const res = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        const part = data?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = part?.inlineData?.data;
+        const mimeType = part?.inlineData?.mimeType || 'audio/L16;rate=24000';
+
+        if (audioData) {
+          const match = mimeType.match(/rate=(\d+)/);
+          const sampleRate = match ? parseInt(match[1], 10) : 24000;
+          const pcmBuffer = base64ToArrayBuffer(audioData);
+          const pcm16 = new Int16Array(pcmBuffer);
+          const wavBlob = pcmToWav(pcm16, sampleRate);
+          
+          if (ttsAudioElement) ttsAudioElement.pause();
+          ttsAudioElement = new Audio(URL.createObjectURL(wavBlob));
+          ttsAudioElement.play();
+
+          label.textContent = "Pausar narración de voz";
+          ttsAudioElement.onended = () => {
+            label.textContent = "Escuchar esta carta con voz cálida";
+          };
+        } else {
+          throw new Error("No se pudo obtener el audio");
+        }
+      } catch (e) {
+        console.error("TTS Error:", e);
+        label.textContent = "Escuchar esta carta con voz cálida";
+      }
+    });
+
+    // Helper: PCM 16 to WAV Blob Converter
+    function pcmToWav(pcm16Array, sampleRate) {
+      const numChannels = 1;
+      const bytesPerSample = 2;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = pcm16Array.length * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      function writeString(v, offset, str) {
+        for (let i = 0; i < str.length; i++) v.setUint8(offset + i, str.charCodeAt(i));
+      }
+
+      writeString(view, 0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeString(view, 8, 'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      let offset = 44;
+      for (let i = 0; i < pcm16Array.length; i++, offset += 2) {
+        view.setInt16(offset, pcm16Array[i], true);
+      }
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    async function generateComfortThought(emotionState) {
+      const outputBox = document.getElementById('comfort-output');
+      outputBox.classList.add('active');
+      outputBox.innerHTML = `<span class="loader-spinner"></span> <i>Escribiendo unas palabras cálidas para ti...</i>`;
+
+      const systemPrompt = "Eres Erika escribiendo una nota corta de amor (2 a 4 frases) extremadamente dulce, comprensiva, reconfortante y romántica para tu pareja. Tu pareja siente: " + emotionState + ". Usa un tono suave, amoroso y profundo.";
+      const userQuery = "Escribe un pensamiento reconfortante personalizado para esta emoción.";
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const res = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          outputBox.innerHTML = `“${text.trim()}”`;
+        } else {
+          outputBox.innerHTML = "Recuerda que aquí estoy, respirando a tu lado en este momento.";
+        }
+      } catch (e) {
+        console.error(e);
+        outputBox.innerHTML = "Tu descanso es mi prioridad. Tómate el tiempo que necesites, mi amor.";
+      }
+    }
+
+    async function sendVentMessage() {
+      const input = document.getElementById('vent-input');
+      const outputBox = document.getElementById('vent-output');
+      const textVal = input.value.trim();
+
+      if (!textVal) return;
+
+      outputBox.classList.add('active');
+      outputBox.innerHTML = `<span class="loader-spinner"></span> <i>Escuchándote con el corazón...</i>`;
+
+      const systemPrompt = "Actúa como Erika, la novia amorosa y comprensiva del usuario. El usuario te está compartiendo algo que siente o que le preocupa. Responde con mucha empatía, ternura, validando sus sentimientos sin juzgarlo, recordándole que no está solo y que cuenta contigo.";
+      
+      const payload = {
+        contents: [{ parts: [{ text: textVal }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+        const res = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (responseText) {
+          outputBox.innerHTML = `<strong>Respuesta de Erika:</strong><br>${responseText.trim()}`;
+          input.value = "";
+        } else {
+          outputBox.innerHTML = "Te escucho y te sostengo. Gracias por confiarme esto.";
+        }
+      } catch (e) {
+        console.error(e);
+        outputBox.innerHTML = "Estoy aquí contigo. No tienes que cargar todo a la vez.";
+      }
+    }
+
+    async function generatePeacefulArt() {
+      const btn = document.getElementById('btn-gen-art');
+      const container = document.getElementById('art-output-container');
+      const img = document.getElementById('art-output-img');
+
+      btn.innerHTML = `<span class="loader-spinner"></span> Pintando una postal de paz...`;
+
+      const prompt = "A serene soft watercolor painting of a warm glowing sunset over calm hills, white jasmine flowers, golden sunlight, cozy peaceful atmosphere, high artistic quality, dreamy warm pastels";
+
+      const payload = {
+        instances: [{ prompt: prompt }],
+        parameters: { sampleCount: 1 }
+      };
+
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+        const res = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        const base64Img = data?.predictions?.[0]?.bytesBase64Encoded;
+
+        if (base64Img) {
+          img.src = `data:image/png;base64,${base64Img}`;
+          container.classList.add('active');
+        }
+      } catch (e) {
+        console.error("Image generation error:", e);
+      } finally {
+        btn.innerHTML = `<span>✨ Generar otra imagen de tranquilidad</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
